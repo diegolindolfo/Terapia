@@ -44,18 +44,17 @@ Responda sempre em português do Brasil.`;
     ? `${BASE_SYSTEM_PROMPT}\n\nRESUMO DA ANAMNESE DESTE USUÁRIO:\n${systemInstruction}\n\nUse esse contexto com naturalidade, sem repetir perguntas já respondidas.`
     : BASE_SYSTEM_PROMPT;
 
+  // Lista com os modelos clássicos/antigos do Gemini
   const attempts = [
-    { model: 'gemini-3.6-flash', thinkingBudget: 0 },
-    { model: 'gemini-3.5-flash-lite', thinkingBudget: null }
+    { model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' },
+    { model: 'gemini-3.6-flash' },
+    { model: 'gemini-3.5-flash-lite' }
   ];
 
   let lastError = null;
   for (const attempt of attempts) {
     try {
       const genConfig = { maxOutputTokens: 2048 };
-      if (attempt.thinkingBudget !== null) {
-        genConfig.thinkingConfig = { thinkingBudget: attempt.thinkingBudget };
-      }
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${attempt.model}:generateContent`;
       const resp = await fetch(url, {
         method: 'POST',
@@ -66,18 +65,22 @@ Responda sempre em português do Brasil.`;
           generationConfig: genConfig
         })
       });
+
       const data = await resp.json();
       if (!resp.ok) {
         lastError = (data.error && data.error.message) || `HTTP ${resp.status}`;
         continue;
       }
+
       const candidate = data.candidates && data.candidates[0];
       const parts = candidate && candidate.content && candidate.content.parts;
       const text = parts ? parts.map((p) => p.text || '').join('').trim() : '';
+
       if (!text) {
         lastError = 'resposta vazia';
         continue;
       }
+
       res.status(200).json({ text, modelUsed: attempt.model });
       return;
     } catch (e) {

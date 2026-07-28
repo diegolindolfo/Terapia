@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#4C3547">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Elo">
+<link rel="manifest" href="/manifest.json">
+<title>Elo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --haze: #EDEEF2; --cloud: #FFFFFF; --ink: #23262B; --ink-soft: #62666E; --line: #DBDDE3;
+    --plum: #6B4C63; --plum-deep: #4C3547; --ochre: #C08A4E; --sage: #7C9885;
+    --rust: #B5453D; --rust-soft: #F3E3E1;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; height: 100dvh; margin: 0; padding: 0; background: var(--haze); color: var(--ink); font-family: 'Inter', sans-serif; overflow: hidden; }
+  body { display: flex; justify-content: center; }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    height: 100dvh;
+    background: var(--haze);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  header {
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    background: var(--cloud);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--plum), var(--ochre)); flex-shrink: 0; }
+  .brand-name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; color: var(--plum-deep); }
+  .brand-status { font-size: 11px; color: var(--sage); }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn { min-width: 44px; min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--haze); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--ink-soft); }
+
+  .settings {
+    background: var(--cloud);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 18px 20px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: 80vh;
+  }
+  .settings.open { display: flex; }
+  .settings h3 { font-size: 14px; margin: 4px 0 0; font-family: 'Fraunces', serif; color: var(--plum-deep); }
+  .settings label { font-size: 11px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .settings input { border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 16px; background: var(--haze); color: var(--ink); width: 100%; }
+  .settings input:focus { outline: none; border-color: var(--plum); }
+  .settings-note { font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+  .btn-mini { background: var(--plum-deep); color: #F6F5F8; border: none; border-radius: 12px; min-height: 44px; padding: 0 18px; font-weight: 600; font-size: 13px; cursor: pointer; align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; }
+
+  .thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .row { display: flex; gap: 8px; }
+  .row.user { justify-content: flex-end; }
+  .thread-line { width: 4px; border-radius: 2px; flex-shrink: 0; align-self: stretch; }
+  .thread-line.fact { background: var(--sage); }
+  .thread-line.hypothesis { background: var(--plum); }
+  .thread-line.neutral { background: var(--line); }
+  .bubble { max-width: 82%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .bubble.ai { background: var(--cloud); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .bubble.user { background: var(--plum-deep); color: #F6F5F8; border-bottom-right-radius: 4px; }
+  .model-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); margin-top: -6px; margin-left: 12px; }
+  .system-note { align-self: center; font-size: 12px; color: var(--ink-soft); font-style: italic; text-align: center; max-width: 90%; }
+  
+  .choice-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .choice-btn { background: var(--cloud); border: 1px solid var(--line); border-radius: 100px; min-height: 44px; padding: 0 16px; font-size: 14px; cursor: pointer; color: var(--plum-deep); font-weight: 500; display: inline-flex; align-items: center; }
+  .choice-btn:active { background: var(--haze); }
+
+  .crisis-banner { background: var(--rust-soft); border: 1px solid #E3C3BF; border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.5; align-self: stretch; }
+  .crisis-banner b { color: var(--rust); }
+  .crisis-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .crisis-actions a { font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; }
+  .crisis-actions .primary { background: var(--rust); color: white; }
+  .crisis-actions .secondary { background: white; color: var(--rust); border: 1px solid #E3C3BF; }
+
+  .typing { align-self: flex-start; display: flex; gap: 5px; padding: 14px 16px; background: var(--cloud); border: 1px solid var(--line); border-radius: 18px; border-bottom-left-radius: 4px; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--plum); opacity: 0.4; animation: pulse 1.1s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes pulse { 0%,60%,100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  .composer {
+    border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--cloud);
+    flex-shrink: 0;
+  }
+  .composer-row { display: flex; gap: 8px; align-items: flex-end; }
+  /* font-size: 16px evita o zoom automático no iOS Safari */
+  textarea { flex: 1; resize: none; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; font-family: inherit; font-size: 16px; color: var(--ink); background: var(--haze); max-height: 110px; line-height: 1.4; }
+  textarea:focus { outline: none; border-color: var(--plum); }
+  button.send { background: var(--plum-deep); color: #F6F5F8; border: none; border-radius: 16px; min-width: 46px; min-height: 46px; flex-shrink: 0; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  button.send:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hint { margin-top: 8px; font-size: 11px; color: var(--ink-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .hint button { background: none; border: none; color: var(--ink-soft); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 4px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="avatar"></div>
+      <div>
+        <div class="brand-name">Elo</div>
+        <div class="brand-status">pronta pra conversar</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="gearBtn" title="Configurações">⚙</button>
+    </div>
+  </header>
+
+  <div class="settings" id="settingsPanel">
+    <h3>GitHub Raw (Sem Autenticação)</h3>
+    <div class="settings-note">Cole o link público de um arquivo Raw no GitHub (ex: <code>https://raw.githubusercontent.com/.../registro.md</code>) para carregar e sincronizar seus dados sem precisar de login.</div>
+    <label for="rawUrl">URL do arquivo Raw</label>
+    <input type="url" id="rawUrl" placeholder="https://raw.githubusercontent.com/usuario/repo/main/elo.md">
+    <button class="btn-mini" id="loadRawBtn">Carregar do GitHub Raw</button>
+    <div class="settings-note" id="rawStatus"></div>
+  </div>
+
+  <div class="thread" id="thread"></div>
+
+  <div class="composer">
+    <div class="composer-row">
+      <textarea id="input" rows="1" placeholder="Escreva sua mensagem..."></textarea>
+      <button class="send" id="sendBtn">↑</button>
+    </div>
+    <div class="hint">
+      <span>Toque para enviar</span>
+      <span>
+        <button id="exportBtn">exportar .md</button> ·
+        <button id="resetBtn">reiniciar</button>
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ANAMNESE_STEPS = [
+  { key: 'nome', question: 'Antes de começarmos: como você prefere que eu te chame?', type: 'text' },
+  { key: 'motivo', question: 'O que te trouxe até aqui hoje?', type: 'text' },
+  { key: 'terapia_previa', question: 'Você já fez acompanhamento terapêutico antes?', type: 'choice', options: ['Sim', 'Não', 'Prefiro não dizer'] },
+  { key: 'seguranca', question: 'Nas últimas duas semanas, você teve pensamentos de se machucar ou de que não valeria a pena continuar?', type: 'choice', options: ['Sim', 'Não', 'Prefiro não dizer'], safety: true },
+  { key: 'humor', question: 'Como você descreveria seu humor geral nos últimos dias?', type: 'choice', options: ['Bem', 'Neutro', 'Cansado', 'Tenso'] }
+];
+
+let history = [];
+let transcriptLog = [];
+let anamneseAnswers = {};
+let anamneseStepIndex = 0;
+let anamneseDone = false;
+let anamneseSummary = '';
+
+const thread = document.getElementById('thread');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const resetBtn = document.getElementById('resetBtn');
+const exportBtn = document.getElementById('exportBtn');
+const gearBtn = document.getElementById('gearBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const rawUrlInput = document.getElementById('rawUrl');
+const loadRawBtn = document.getElementById('loadRawBtn');
+const rawStatus = document.getElementById('rawStatus');
+
+function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
+function lsGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function lsSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error(e); } }
+
+function addUserMessage(text, skipLog) {
+  const row = document.createElement('div');
+  row.className = 'row user';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble user';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  thread.appendChild(row);
+  scrollToBottom();
+  if (!skipLog) logMessage('user', text, 'neutral');
+}
+
+function parseTag(text) {
+  const match = text.match(/^\s*(?:\*\*)?\[(FATO|HIPOTESE|HIPÓTESE|NEUTRO|CRISE)\](?:\*\*)?\s*/i);
+  if (!match) return { tag: 'neutral', clean: text };
+  const raw = match[1].toUpperCase();
+  const clean = text.slice(match[0].length).trim();
+  if (raw === 'FATO') return { tag: 'fact', clean };
+  if (raw.startsWith('HIP')) return { tag: 'hypothesis', clean };
+  if (raw === 'CRISE') return { tag: 'crisis', clean };
+  return { tag: 'neutral', clean };
+}
+
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function addCrisisBanner(text) {
+  const banner = document.createElement('div');
+  banner.className = 'crisis-banner';
+  banner.innerHTML = `<span>${escapeHtml(text)}</span>
+    <div class="crisis-actions">
+      <a class="primary" href="tel:188">Ligar 188 · CVV</a>
+      <a class="secondary" href="tel:192">SAMU · 192</a>
+    </div>`;
+  thread.appendChild(banner);
+  scrollToBottom();
+}
+
+function addAiMessage(rawText, modelUsed, skipLog) {
+  const { tag, clean } = parseTag(rawText);
+  if (tag === 'crisis') {
+    addCrisisBanner(clean);
+    if (!skipLog) logMessage('model', rawText, tag, modelUsed);
+    return;
+  }
+  const row = document.createElement('div');
+  row.className = 'row ai';
+  const line = document.createElement('div');
+  line.className = 'thread-line ' + tag;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ai';
+  bubble.textContent = clean;
+  row.appendChild(line);
+  row.appendChild(bubble);
+  thread.appendChild(row);
+  if (modelUsed) {
+    const tagEl = document.createElement('div');
+    tagEl.className = 'model-tag';
+    tagEl.textContent = modelUsed;
+    thread.appendChild(tagEl);
+  }
+  scrollToBottom();
+  if (!skipLog) logMessage('model', rawText, tag, modelUsed);
+}
+
+function addSystemNote(text) {
+  const el = document.createElement('div');
+  el.className = 'system-note';
+  el.textContent = text;
+  thread.appendChild(el);
+  scrollToBottom();
+}
+
+function addTyping() {
+  const el = document.createElement('div');
+  el.className = 'typing'; el.id = 'typingIndicator';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  thread.appendChild(el); scrollToBottom();
+}
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+function logMessage(role, text, tag, modelUsed) {
+  transcriptLog.push({ role, text, tag: tag || 'neutral', model: modelUsed || null, ts: new Date().toISOString() });
+  persistData();
+}
+
+function persistData() {
+  lsSet('elo:transcript', transcriptLog);
+  lsSet('elo:anamnese', anamneseAnswers);
+}
+
+function buildTranscriptMarkdown() {
+  let md = `# Registro Elo\n\n`;
+  if (Object.keys(anamneseAnswers).length) {
+    md += `## Anamnese\n\n`;
+    for (const step of ANAMNESE_STEPS) {
+      if (anamneseAnswers[step.key] !== undefined) md += `**${step.question}**\n${anamneseAnswers[step.key]}\n\n`;
+    }
+    md += `---\n\n`;
+  }
+  md += `## Conversa\n\n`;
+  for (const m of transcriptLog) {
+    const who = m.role === 'user' ? 'Você' : 'Elo';
+    const time = new Date(m.ts).toLocaleString('pt-BR');
+    md += `**${who}** _(${time}${m.tag && m.tag !== 'neutral' ? ' · ' + m.tag : ''})_\n${m.text}\n\n`;
+  }
+  return md;
+}
+
+// Carrega arquivo público do GitHub Raw sem necessidade de token/autenticação
+loadRawBtn.addEventListener('click', async () => {
+  const url = rawUrlInput.value.trim();
+  if (!url) { rawStatus.textContent = 'Informe a URL do arquivo Raw.'; return; }
+  rawStatus.textContent = 'Buscando arquivo...';
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    rawStatus.textContent = 'Arquivo carregado com sucesso!';
+    lsSet('elo:raw-url', url);
+    parseAndLoadMarkdown(text);
+  } catch (err) {
+    rawStatus.textContent = 'Erro ao carregar: ' + err.message;
+  }
+});
+
+function parseAndLoadMarkdown(mdText) {
+  thread.innerHTML = '';
+  history = [];
+  transcriptLog = [];
+  
+  // Tenta extrair blocos de anamnese ou histórico do Markdown
+  const lines = mdText.split('\n');
+  let currentRole = null;
+  let currentMessage = [];
+
+  for (const line of lines) {
+    if (line.startsWith('**Você**')) {
+      if (currentRole && currentMessage.length) processLoadedBlock(currentRole, currentMessage.join('\n'));
+      currentRole = 'user'; currentMessage = [];
+    } else if (line.startsWith('**Elo**')) {
+      if (currentRole && currentMessage.length) processLoadedBlock(currentRole, currentMessage.join('\n'));
+      currentRole = 'model'; currentMessage = [];
+    } else if (currentRole) {
+      currentMessage.push(line);
+    }
+  }
+  if (currentRole && currentMessage.length) processLoadedBlock(currentRole, currentMessage.join('\n'));
+
+  anamneseDone = true;
+  lsSet('elo:anamnese-done', true);
+  addSystemNote('Registro carregado do GitHub Raw com sucesso.');
+  input.disabled = false; sendBtn.disabled = false;
+}
+
+function processLoadedBlock(role, text) {
+  const cleanText = text.trim();
+  if (!cleanText) return;
+  if (role === 'user') {
+    addUserMessage(cleanText, true);
+    history.push({ role: 'user', parts: [{ text: cleanText }] });
+    transcriptLog.push({ role: 'user', text: cleanText, ts: new Date().toISOString() });
+  } else {
+    addAiMessage(cleanText, null, true);
+    history.push({ role: 'model', parts: [{ text: cleanText }] });
+    transcriptLog.push({ role: 'model', text: cleanText, ts: new Date().toISOString() });
+  }
+}
+
+async function callBackend(contents, systemInstruction) {
+  const resp = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents, systemInstruction })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+  return data;
+}
+
+function renderAnamneseStep() {
+  const step = ANAMNESE_STEPS[anamneseStepIndex];
+  if (!step) { finishAnamnese(); return; }
+  addAiMessage('[NEUTRO] ' + step.question, null, true);
+  if (step.type === 'choice') {
+    input.disabled = true; sendBtn.disabled = true;
+    const row = document.createElement('div');
+    row.className = 'choice-row';
+    step.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = opt;
+      btn.onclick = () => handleAnamneseAnswer(step, opt, row);
+      row.appendChild(btn);
+    });
+    thread.appendChild(row);
+    scrollToBottom();
+  } else {
+    input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Escreva sua resposta...';
+    input.focus();
+  }
+}
+
+function handleAnamneseAnswer(step, answer, choiceRowEl) {
+  if (choiceRowEl) choiceRowEl.remove();
+  addUserMessage(answer, true);
+  anamneseAnswers[step.key] = answer;
+  logMessage('user', `[anamnese: ${step.key}] ${answer}`, 'neutral');
+  if (step.safety && answer === 'Sim') {
+    addCrisisBanner('Obrigado por confiar isso a mim. Quero ter certeza de que você está seguro agora — antes de seguirmos com a anamnese, veja esses contatos.');
+  }
+  anamneseStepIndex++;
+  setTimeout(renderAnamneseStep, 300);
+}
+
+function finishAnamnese() {
+  anamneseDone = true;
+  lsSet('elo:anamnese-done', true);
+  anamneseSummary = ANAMNESE_STEPS.map(s => anamneseAnswers[s.key] ? `${s.question} → ${anamneseAnswers[s.key]}` : null).filter(Boolean).join('\n');
+  addSystemNote('Anamnese registrada. A conversa agora é livre — pode escrever o que quiser.');
+  input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Escreva sua mensagem...';
+  input.focus();
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!anamneseDone) {
+    const step = ANAMNESE_STEPS[anamneseStepIndex];
+    if (step && step.type === 'text') {
+      input.value = ''; input.style.height = 'auto';
+      handleAnamneseAnswer(step, text);
+      return;
+    }
+  }
+
+  addUserMessage(text);
+  history.push({ role: 'user', parts: [{ text }] });
+  input.value = ''; input.style.height = 'auto';
+  sendBtn.disabled = true;
+  addTyping();
+
+  try {
+    const { text: replyText, modelUsed } = await callBackend(history, anamneseSummary);
+    removeTyping();
+    addAiMessage(replyText, modelUsed);
+    history.push({ role: 'model', parts: [{ text: replyText }] });
+  } catch (err) {
+    removeTyping();
+    addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+gearBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 110) + 'px'; });
+sendBtn.addEventListener('click', sendMessage);
+
+exportBtn.addEventListener('click', () => {
+  const md = buildTranscriptMarkdown();
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `elo-registro-${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+resetBtn.addEventListener('click', () => {
+  if (!confirm('Isso apaga a conversa e a anamnese salvas neste navegador. Continuar?')) return;
+  history = []; transcriptLog = []; anamneseAnswers = {}; anamneseStepIndex = 0; anamneseDone = false; anamneseSummary = '';
+  lsSet('elo:transcript', []); lsSet('elo:anamnese', {}); lsSet('elo:anamnese-done', false);
+  thread.innerHTML = '';
+  renderAnamneseStep();
+});
+
+// Registro do Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error: ', err));
+  });
+}
+
+function boot() {
+  const savedTranscript = lsGet('elo:transcript');
+  const savedAnamnese = lsGet('elo:anamnese');
+  const savedDone = lsGet('elo:anamnese-done');
+  const savedRawUrl = lsGet('elo:raw-url');
+
+  if (savedRawUrl) rawUrlInput.value = savedRawUrl;
+  if (savedAnamnese) anamneseAnswers = savedAnamnese;
+  if (savedDone) anamneseDone = true;
+
+  if (savedTranscript && savedTranscript.length) {
+    transcriptLog = savedTranscript;
+    for (const m of transcriptLog) {
+      if (m.text.startsWith('[anamnese:')) continue;
+      if (m.role === 'user') { addUserMessage(m.text, true); history.push({ role: 'user', parts: [{ text: m.text }] }); }
+      else { addAiMessage(m.text, m.model, true); history.push({ role: 'model', parts: [{ text: m.text }] }); }
+    }
+    addSystemNote('Conversa anterior carregada deste navegador.');
+  }
+
+  if (anamneseDone) {
+    anamneseSummary = ANAMNESE_STEPS.map(s => anamneseAnswers[s.key] ? `${s.question} → ${anamneseAnswers[s.key]}` : null).filter(Boolean).join('\n');
+    input.disabled = false; sendBtn.disabled = false;
+  } else {
+    input.disabled = true; sendBtn.disabled = true;
+    renderAnamneseStep();
+  }
+}
+boot();
+</script>
+</body>
+</html>
