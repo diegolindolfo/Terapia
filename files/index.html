@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#4C3547">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<title>Elo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --haze: #EDEEF2; --cloud: #FFFFFF; --ink: #23262B; --ink-soft: #62666E; --line: #DBDDE3;
+    --plum: #6B4C63; --plum-deep: #4C3547; --ochre: #C08A4E; --sage: #7C9885;
+    --rust: #B5453D; --rust-soft: #F3E3E1;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior-y: contain; }
+  body { margin: 0; background: var(--haze); color: var(--ink); font-family: 'Inter', sans-serif; display: flex; justify-content: center; }
+  .app {
+    width: 100%; max-width: 460px;
+    height: 100vh; height: 100dvh; height: var(--app-height, 100dvh);
+    background: var(--haze); display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  header {
+    padding: max(16px, env(safe-area-inset-top)) 18px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--line); background: var(--cloud); flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--plum), var(--ochre)); flex-shrink: 0; }
+  .brand-name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 16.5px; color: var(--plum-deep); }
+  .brand-status { font-size: 10.5px; color: var(--sage); }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--haze); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--ink-soft); touch-action: manipulation; flex-shrink: 0;
+  }
+
+  .settings { background: var(--cloud); border-bottom: 1px solid var(--line); padding: 16px 18px 18px; display: none; flex-direction: column; gap: 10px; flex-shrink: 0; overflow-y: auto; max-height: 70vh; }
+  .settings.open { display: flex; }
+  .settings h3 { font-size: 13px; margin: 6px 0 0; font-family: 'Fraunces', serif; color: var(--plum-deep); }
+  .settings label { font-size: 10.5px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-top: 4px; }
+  .settings input { border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 16px; background: var(--haze); color: var(--ink); width: 100%; min-height: 44px; }
+  .settings input:focus { outline: none; border-color: var(--plum); }
+  .settings-note { font-size: 12px; color: var(--ink-soft); line-height: 1.55; }
+  .settings-note.warn { background: var(--rust-soft); border: 1px solid #E3C3BF; padding: 10px; border-radius: 10px; color: #6b2b23; }
+  .checkbox-row { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+  .checkbox-row input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+  .btn-mini { background: var(--plum-deep); color: #F6F5F8; border: none; border-radius: 10px; padding: 12px 18px; font-weight: 600; font-size: 14px; cursor: pointer; align-self: stretch; min-height: 44px; touch-action: manipulation; }
+
+  .thread { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: 20px 18px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .row { display: flex; gap: 10px; }
+  .row.user { justify-content: flex-end; }
+  .thread-line { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; }
+  .thread-line.fact { background: var(--sage); }
+  .thread-line.hypothesis { background: var(--plum); }
+  .thread-line.neutral { background: var(--line); }
+  .bubble { max-width: 78%; padding: 11px 15px; border-radius: 15px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+  .bubble.ai { background: var(--cloud); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .bubble.user { background: var(--plum-deep); color: #F6F5F8; border-bottom-right-radius: 4px; }
+  .model-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink-soft); margin-top: 4px; margin-left: 13px; }
+  .system-note { align-self: center; font-size: 12.5px; color: var(--ink-soft); font-style: italic; text-align: center; max-width: 90%; }
+  .choice-row { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 0 13px; }
+  .choice-btn {
+    background: var(--cloud); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 16px; font-size: 14px; cursor: pointer; color: var(--plum-deep); font-weight: 500;
+    text-align: left; min-height: 44px; touch-action: manipulation; width: 100%;
+  }
+  .choice-btn:active { border-color: var(--plum); background: var(--haze); }
+  .crisis-banner { background: var(--rust-soft); border: 1px solid #E3C3BF; border-radius: 14px; padding: 14px 16px; font-size: 13px; line-height: 1.5; align-self: stretch; }
+  .crisis-banner b { color: var(--rust); }
+  .crisis-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .crisis-actions a {
+    font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 10px; text-decoration: none;
+    display: inline-flex; align-items: center; min-height: 44px; touch-action: manipulation;
+  }
+  .crisis-actions .primary { background: var(--rust); color: white; }
+  .crisis-actions .secondary { background: white; color: var(--rust); border: 1px solid #E3C3BF; }
+  .typing { align-self: flex-start; display: flex; gap: 4px; padding: 13px 15px; background: var(--cloud); border: 1px solid var(--line); border-radius: 15px; border-bottom-left-radius: 4px; }
+  .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--plum); opacity: 0.4; animation: pulse 1.1s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes pulse { 0%,60%,100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+
+  .composer {
+    border-top: 1px solid var(--line);
+    padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+    background: var(--cloud); flex-shrink: 0;
+  }
+  .composer-row { display: flex; gap: 8px; align-items: flex-end; }
+  textarea {
+    flex: 1; resize: none; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    font-family: inherit; font-size: 16px; color: var(--ink); background: var(--haze); max-height: 100px; line-height: 1.45;
+  }
+  textarea:focus { outline: none; border-color: var(--plum); }
+  button.send {
+    background: var(--plum-deep); color: #F6F5F8; border: none; border-radius: 14px;
+    width: 46px; height: 46px; flex-shrink: 0; cursor: pointer; font-size: 18px; touch-action: manipulation;
+  }
+  button.send:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.send:active:not(:disabled) { background: var(--plum); }
+  .hint { margin-top: 8px; font-size: 10.5px; color: var(--ink-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  .hint button { background: none; border: none; color: var(--ink-soft); font-size: 10.5px; text-decoration: underline; cursor: pointer; padding: 6px 2px; touch-action: manipulation; }
+  .sync-status { font-family: 'IBM Plex Mono', monospace; }
+  .sync-status.ok { color: var(--sage); }
+  .sync-status.err { color: var(--rust); }
+
+  .thread::-webkit-scrollbar, .settings::-webkit-scrollbar { width: 6px; }
+  .thread::-webkit-scrollbar-thumb, .settings::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="avatar"></div>
+      <div>
+        <div class="brand-name">Elo</div>
+        <div class="brand-status">pronta pra conversar</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="gearBtn" title="Configurações">⚙</button>
+    </div>
+  </header>
+
+  <div class="settings" id="settingsPanel">
+    <div class="settings-note">A chave do Gemini fica só no servidor (variável de ambiente da Vercel) — este painel só cuida da sincronização com o GitHub.</div>
+    <h3>Sincronização com GitHub (opcional)</h3>
+    <div class="settings-note">Salva o registro completo automaticamente como um arquivo de texto num repositório seu, a cada troca de mensagem.</div>
+    <label for="ghToken">Token de acesso pessoal (repo scope)</label>
+    <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off">
+    <label for="ghOwner">Usuário/organização</label>
+    <input type="text" id="ghOwner" placeholder="seu-usuario">
+    <label for="ghRepo">Repositório</label>
+    <input type="text" id="ghRepo" placeholder="meus-registros">
+    <label for="ghPath">Caminho do arquivo</label>
+    <input type="text" id="ghPath" value="elo/registro.md">
+    <div class="settings-note warn">Registro de conversas terapêuticas é dado sensível de saúde. Se o repositório for público, qualquer pessoa pode ler. Recomendo repositório <b>privado</b>. Se mesmo assim quiser público, confirme abaixo.</div>
+    <label class="checkbox-row"><input type="checkbox" id="ghPublicConfirm"> Entendo o risco e quero prosseguir mesmo assim</label>
+    <button class="btn-mini" id="saveGithubBtn">Salvar e ativar sincronização</button>
+    <div class="settings-note" id="syncCurrentStatus"></div>
+  </div>
+
+  <div class="thread" id="thread"></div>
+
+  <div class="composer">
+    <div class="composer-row">
+      <textarea id="input" rows="1" placeholder="Escreva sua mensagem..."></textarea>
+      <button class="send" id="sendBtn">↑</button>
+    </div>
+    <div class="hint">
+      <span>Enter envia · Shift+Enter quebra linha</span>
+      <span>
+        <span class="sync-status" id="syncStatusMini"></span>
+        <button id="exportBtn">exportar .md</button> ·
+        <button id="resetBtn">reiniciar</button>
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ANAMNESE_STEPS = [
+  { key: 'nome', question: 'Antes de começarmos: como você prefere que eu te chame?', type: 'text' },
+  { key: 'motivo', question: 'O que te trouxe até aqui hoje?', type: 'text' },
+  { key: 'terapia_previa', question: 'Você já fez acompanhamento terapêutico antes?', type: 'choice', options: ['Sim', 'Não', 'Prefiro não dizer'] },
+  { key: 'seguranca', question: 'Nas últimas duas semanas, você teve pensamentos de se machucar ou de que não valeria a pena continuar?', type: 'choice', options: ['Sim', 'Não', 'Prefiro não dizer'], safety: true },
+  { key: 'humor', question: 'Como você descreveria seu humor geral nos últimos dias?', type: 'choice', options: ['Bem', 'Neutro', 'Cansado', 'Tenso'] }
+];
+
+let githubConfig = null;
+let history = [];
+let transcriptLog = [];
+let anamneseAnswers = {};
+let anamneseStepIndex = 0;
+let anamneseDone = false;
+let anamneseSummary = '';
+
+const thread = document.getElementById('thread');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const resetBtn = document.getElementById('resetBtn');
+const exportBtn = document.getElementById('exportBtn');
+const gearBtn = document.getElementById('gearBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const ghToken = document.getElementById('ghToken');
+const ghOwner = document.getElementById('ghOwner');
+const ghRepo = document.getElementById('ghRepo');
+const ghPath = document.getElementById('ghPath');
+const ghPublicConfirm = document.getElementById('ghPublicConfirm');
+const saveGithubBtn = document.getElementById('saveGithubBtn');
+const syncCurrentStatus = document.getElementById('syncCurrentStatus');
+const syncStatusMini = document.getElementById('syncStatusMini');
+
+function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
+function lsGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function lsSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error(e); } }
+
+function addUserMessage(text, skipLog) {
+  const row = document.createElement('div');
+  row.className = 'row user';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble user';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  thread.appendChild(row);
+  scrollToBottom();
+  if (!skipLog) logMessage('user', text, 'neutral');
+}
+
+function parseTag(text) {
+  const match = text.match(/^\[(FATO|HIPOTESE|HIPÓTESE|NEUTRO|CRISE)\]\s*/i);
+  if (!match) return { tag: 'neutral', clean: text };
+  const raw = match[1].toUpperCase();
+  const clean = text.slice(match[0].length);
+  if (raw === 'FATO') return { tag: 'fact', clean };
+  if (raw.startsWith('HIP')) return { tag: 'hypothesis', clean };
+  if (raw === 'CRISE') return { tag: 'crisis', clean };
+  return { tag: 'neutral', clean };
+}
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function addCrisisBanner(text) {
+  const banner = document.createElement('div');
+  banner.className = 'crisis-banner';
+  banner.innerHTML = `<span>${escapeHtml(text)}</span>
+    <div class="crisis-actions">
+      <a class="primary" href="tel:188">Ligar 188 · CVV</a>
+      <a class="secondary" href="tel:192">SAMU · 192</a>
+    </div>`;
+  thread.appendChild(banner);
+  scrollToBottom();
+}
+
+function addAiMessage(rawText, modelUsed, skipLog) {
+  const { tag, clean } = parseTag(rawText);
+  if (tag === 'crisis') {
+    addCrisisBanner(clean);
+    if (!skipLog) logMessage('model', rawText, tag, modelUsed);
+    return;
+  }
+  const row = document.createElement('div');
+  row.className = 'row ai';
+  const line = document.createElement('div');
+  line.className = 'thread-line ' + tag;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ai';
+  bubble.textContent = clean;
+  row.appendChild(line);
+  row.appendChild(bubble);
+  thread.appendChild(row);
+  if (modelUsed) {
+    const tagEl = document.createElement('div');
+    tagEl.className = 'model-tag';
+    tagEl.textContent = modelUsed;
+    thread.appendChild(tagEl);
+  }
+  scrollToBottom();
+  if (!skipLog) logMessage('model', rawText, tag, modelUsed);
+}
+
+function addSystemNote(text) {
+  const el = document.createElement('div');
+  el.className = 'system-note';
+  el.textContent = text;
+  thread.appendChild(el);
+  scrollToBottom();
+}
+function addTyping() {
+  const el = document.createElement('div');
+  el.className = 'typing'; el.id = 'typingIndicator';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  thread.appendChild(el); scrollToBottom();
+}
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+function logMessage(role, text, tag, modelUsed) {
+  transcriptLog.push({ role, text, tag: tag || 'neutral', model: modelUsed || null, ts: new Date().toISOString() });
+  persistAndSync();
+}
+let syncTimer = null;
+function persistAndSync() {
+  lsSet('elo:transcript', transcriptLog);
+  lsSet('elo:anamnese', anamneseAnswers);
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncToGithub(), 600);
+}
+
+function buildTranscriptMarkdown() {
+  let md = `# Registro Elo\n\n`;
+  if (Object.keys(anamneseAnswers).length) {
+    md += `## Anamnese\n\n`;
+    for (const step of ANAMNESE_STEPS) {
+      if (anamneseAnswers[step.key] !== undefined) md += `**${step.question}**\n${anamneseAnswers[step.key]}\n\n`;
+    }
+    md += `---\n\n`;
+  }
+  md += `## Conversa\n\n`;
+  for (const m of transcriptLog) {
+    const who = m.role === 'user' ? 'Você' : 'Elo';
+    const time = new Date(m.ts).toLocaleString('pt-BR');
+    md += `**${who}** _(${time}${m.tag && m.tag !== 'neutral' ? ' · ' + m.tag : ''})_\n${m.text}\n\n`;
+  }
+  return md;
+}
+
+async function syncToGithub() {
+  if (!githubConfig || !githubConfig.enabled) return;
+  const { token, owner, repo, path } = githubConfig;
+  if (!token || !owner || !repo || !path) return;
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  try {
+    let sha = null;
+    const getResp = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+    if (getResp.ok) { const d = await getResp.json(); sha = d.sha; }
+    const content = buildTranscriptMarkdown();
+    const body = { message: `Atualiza registro Elo — ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(content))) };
+    if (sha) body.sha = sha;
+    const putResp = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (putResp.ok) setSyncStatus('ok', 'sincronizado');
+    else { const e = await putResp.json().catch(()=>({})); setSyncStatus('err', 'falha: ' + (e.message || putResp.status)); }
+  } catch (e) { setSyncStatus('err', 'falha: ' + e.message); }
+}
+function setSyncStatus(kind, text) {
+  syncStatusMini.className = 'sync-status ' + kind;
+  syncStatusMini.textContent = githubConfig && githubConfig.enabled ? `github: ${text} · ` : '';
+}
+
+async function callBackend(contents, systemInstruction) {
+  const resp = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents, systemInstruction })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+  return data; // { text, modelUsed }
+}
+
+function renderAnamneseStep() {
+  const step = ANAMNESE_STEPS[anamneseStepIndex];
+  if (!step) { finishAnamnese(); return; }
+  addAiMessage('[NEUTRO] ' + step.question, null, true);
+  if (step.type === 'choice') {
+    input.disabled = true; sendBtn.disabled = true;
+    const row = document.createElement('div');
+    row.className = 'choice-row';
+    step.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = opt;
+      btn.onclick = () => handleAnamneseAnswer(step, opt, row);
+      row.appendChild(btn);
+    });
+    thread.appendChild(row);
+    scrollToBottom();
+  } else {
+    input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Escreva sua resposta...';
+    input.focus();
+  }
+}
+function handleAnamneseAnswer(step, answer, choiceRowEl) {
+  if (choiceRowEl) choiceRowEl.remove();
+  addUserMessage(answer, true);
+  anamneseAnswers[step.key] = answer;
+  logMessage('user', `[anamnese: ${step.key}] ${answer}`, 'neutral');
+  if (step.safety && answer === 'Sim') {
+    addCrisisBanner('Obrigado por confiar isso a mim. Quero ter certeza de que você está seguro agora — antes de seguirmos com a anamnese, veja esses contatos.');
+  }
+  anamneseStepIndex++;
+  setTimeout(renderAnamneseStep, 300);
+}
+function finishAnamnese() {
+  anamneseDone = true;
+  lsSet('elo:anamnese-done', true);
+  anamneseSummary = ANAMNESE_STEPS.map(s => anamneseAnswers[s.key] ? `${s.question} → ${anamneseAnswers[s.key]}` : null).filter(Boolean).join('\n');
+  addSystemNote('Anamnese registrada. A conversa agora é livre — pode escrever o que quiser.');
+  input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Escreva sua mensagem...';
+  input.focus();
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!anamneseDone) {
+    const step = ANAMNESE_STEPS[anamneseStepIndex];
+    if (step && step.type === 'text') {
+      input.value = ''; input.style.height = 'auto';
+      handleAnamneseAnswer(step, text);
+      return;
+    }
+  }
+
+  addUserMessage(text);
+  history.push({ role: 'user', parts: [{ text }] });
+  input.value = ''; input.style.height = 'auto';
+  sendBtn.disabled = true;
+  addTyping();
+
+  try {
+    const { text: replyText, modelUsed } = await callBackend(history, anamneseSummary);
+    removeTyping();
+    addAiMessage(replyText, modelUsed);
+    history.push({ role: 'model', parts: [{ text: replyText }] });
+  } catch (err) {
+    removeTyping();
+    addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+gearBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+
+saveGithubBtn.addEventListener('click', () => {
+  const cfg = {
+    token: ghToken.value.trim(), owner: ghOwner.value.trim(), repo: ghRepo.value.trim(),
+    path: ghPath.value.trim() || 'elo/registro.md', enabled: false
+  };
+  if (!cfg.token || !cfg.owner || !cfg.repo) { syncCurrentStatus.textContent = 'Preencha token, usuário e repositório.'; return; }
+  if (!ghPublicConfirm.checked) { syncCurrentStatus.textContent = 'Marque a confirmação acima pra ativar.'; return; }
+  cfg.enabled = true;
+  githubConfig = cfg;
+  lsSet('elo:github-config', cfg);
+  ghToken.value = '';
+  syncCurrentStatus.textContent = 'Sincronização ativa em ' + cfg.owner + '/' + cfg.repo + '/' + cfg.path;
+  setSyncStatus('ok', 'ativo');
+  if (transcriptLog.length) syncToGithub();
+});
+
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 100) + 'px'; });
+
+/* ---------- altura real do app + teclado do celular ---------- */
+// window.innerHeight não muda quando o teclado abre em vários navegadores mobile,
+// então a caixa de escrita ficava "presa" atrás do teclado. O visualViewport sabe
+// a altura visível de verdade — usamos ela pra encolher o app até caber ali.
+function updateAppHeight() {
+  const vv = window.visualViewport;
+  const h = vv ? vv.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', h + 'px');
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => { updateAppHeight(); scrollToBottom(); });
+  window.visualViewport.addEventListener('scroll', updateAppHeight);
+} else {
+  window.addEventListener('resize', updateAppHeight);
+}
+updateAppHeight();
+
+input.addEventListener('focus', () => {
+  // dá tempo da animação do teclado terminar antes de recalcular e rolar
+  setTimeout(() => { updateAppHeight(); scrollToBottom(); }, 350);
+});
+
+/* ---------- service worker (PWA) ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+sendBtn.addEventListener('click', sendMessage);
+
+exportBtn.addEventListener('click', () => {
+  const md = buildTranscriptMarkdown();
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `elo-registro-${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+resetBtn.addEventListener('click', () => {
+  if (!confirm('Isso apaga a conversa e a anamnese salvas neste navegador. Continuar?')) return;
+  history = []; transcriptLog = []; anamneseAnswers = {}; anamneseStepIndex = 0; anamneseDone = false; anamneseSummary = '';
+  lsSet('elo:transcript', []); lsSet('elo:anamnese', {}); lsSet('elo:anamnese-done', false);
+  thread.innerHTML = '';
+  renderAnamneseStep();
+});
+
+function boot() {
+  const savedTranscript = lsGet('elo:transcript');
+  const savedAnamnese = lsGet('elo:anamnese');
+  const savedDone = lsGet('elo:anamnese-done');
+  const savedGithub = lsGet('elo:github-config');
+
+  if (savedGithub) { githubConfig = savedGithub; setSyncStatus('ok', 'ativo'); }
+  if (savedAnamnese) anamneseAnswers = savedAnamnese;
+  if (savedDone) anamneseDone = true;
+
+  if (savedTranscript && savedTranscript.length) {
+    transcriptLog = savedTranscript;
+    for (const m of transcriptLog) {
+      if (m.text.startsWith('[anamnese:')) continue;
+      if (m.role === 'user') { addUserMessage(m.text, true); history.push({ role: 'user', parts: [{ text: m.text }] }); }
+      else { addAiMessage(m.text, m.model, true); history.push({ role: 'model', parts: [{ text: m.text }] }); }
+    }
+    addSystemNote('Conversa anterior carregada deste navegador.');
+  }
+
+  if (anamneseDone) {
+    anamneseSummary = ANAMNESE_STEPS.map(s => anamneseAnswers[s.key] ? `${s.question} → ${anamneseAnswers[s.key]}` : null).filter(Boolean).join('\n');
+    input.disabled = false; sendBtn.disabled = false;
+  } else {
+    input.disabled = true; sendBtn.disabled = true;
+    renderAnamneseStep();
+  }
+}
+boot();
+</script>
+</body>
+</html>
