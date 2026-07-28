@@ -44,11 +44,11 @@ Responda sempre em português do Brasil.`;
     ? `${BASE_SYSTEM_PROMPT}\n\nRESUMO DA ANAMNESE DESTE USUÁRIO:\n${systemInstruction}\n\nUse esse contexto com naturalidade, sem repetir perguntas já respondidas.`
     : BASE_SYSTEM_PROMPT;
 
-  // Lista com os modelos clássicos/antigos do Gemini
+  // Lista de modelos Gemini com fallback inteligente
   const attempts = [
-    { model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' },
-    { model: 'gemini-3.6-flash' },
-    { model: 'gemini-3.5-flash-lite' }
+    { model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' },
+    { model: 'gemini-2.0-flash' },
+    { model: 'gemini-1.5-flash' }
   ];
 
   let lastError = null;
