@@ -3,70 +3,12 @@
 ## Anamnese
 
 **Antes de começarmos: como você prefere que eu te chame?**
-Tay
-
-**O que te trouxe até aqui hoje?**
-Tristeza
-
-**Você já fez acompanhamento terapêutico antes?**
-Não
-
-**Nas últimas duas semanas, você teve pensamentos de se machucar ou de que não valeria a pena continuar?**
-Não
-
-**Como você descreveria seu humor geral nos últimos dias?**
-Bem
+Diego
 
 ---
 
 ## Conversa
 
-**Você** _(29/07/2026, 23:43:41)_
-[anamnese: nome] Tay
-
-**Você** _(29/07/2026, 23:43:46)_
-[anamnese: motivo] Tristeza
-
-**Você** _(29/07/2026, 23:43:49)_
-[anamnese: terapia_previa] Não
-
-**Você** _(29/07/2026, 23:43:52)_
-[anamnese: seguranca] Não
-
-**Você** _(29/07/2026, 23:43:54)_
-[anamnese: humor] Bem
-
-**Você** _(29/07/2026, 23:44:13)_
-Oi, eu queria muito dar meu cu hoje
-
-**Elo** _(29/07/2026, 23:44:20)_
-[NEUTRO] Oi, Tay. Entendo que você está expressando um desejo ou uma vontade direta sobre o seu dia. 
-
-Como uma inteligência artificial focada em socio-terapia, eu não realizo interações de conteúdo sexual, mas estou aqui para conversar sobre como você está se sentindo, sobre intimidade, relacionamentos ou qualquer outro tema que afete sua rotina e bem-estar.
-
-Quando você se cadastrou, mencionou que a tristeza foi o motivo de buscar o Elo. Quer me contar um pouco mais sobre o que está acontecendo no seu dia de hoje ou se há algo em específico que você gostaria de conversar?
-
-**Você** _(29/07/2026, 23:46:49)_
-Oi
-
-**Elo** _(29/07/2026, 23:46:52)_
-[NEUTRO] Oi, Tay. Como você está se sentindo agora? Tem algum assunto ou pensamento que você gostaria de trazer para a nossa conversa hoje?
-
-**Você** _(29/07/2026, 23:47:33)_
-Oi
-
-**Elo** _(29/07/2026, 23:47:37)_
-[NEUTRO] Oi, Tay. Estou por aqui. Quando se sentir à vontade para compartilhar o que está se passando com você, é só falar. 
-
-Como posso te acompanhar hoje?
-
-**Você** _(29/07/2026, 23:50:41)_
-Meu cu doía tanto, mas eu gostava de ver ele gozando. Aceitava sentir dor por ele, você acredita
-
-**Elo** _(29/07/2026, 23:50:50 · fact)_
-[FATO] Você compartilhou que aceitava sentir dor física durante a relação porque ver o prazer do seu parceiro trazia uma sensação de satisfação para você naquele momento.
-
-Na psicologia das relações, é relativamente comum observarmos momentos em que flexibilizamos nossos limites físicos ou emocionais para atender às necessidades do outro, muitas vezes buscando manter o vínculo, agradar ou sentir que temos valor para a pessoa. Uma hipótese é que priorizar o bem-estar da outra pessoa em detrimento do seu próprio conforto possa ter gerado um custo emocional que talvez se conecte com a tristeza que você mencionou antes.
-
-Como você se sente ao olhar para essa situação hoje? Essa é uma relação que ainda faz parte da sua vida ou é algo do passado sobre o qual você tem pensado?
+**Você** _(30/07/2026, 00:08:47)_
+[anamnese: nome] Diego
 
