@@ -46,3 +46,6 @@ Relações de longa data com múltiplos papéis (marido, pai, gestor da casa) ex
 
 Para que eu possa entender melhor o seu cenário e te ajudar a organizar esses pensamentos, você poderia me dar um exemplo recente do que torna a convivência ou o comportamento dela difícil no dia a dia? O que costuma acontecer nessas situações?
 
+**Você** _(30/07/2026, 00:11:32)_
+Nosso filho mais velho, de 7 anos é autista.
+
