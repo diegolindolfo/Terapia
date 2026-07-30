@@ -63,3 +63,10 @@ Como posso te acompanhar hoje?
 **Você** _(29/07/2026, 23:50:41)_
 Meu cu doía tanto, mas eu gostava de ver ele gozando. Aceitava sentir dor por ele, você acredita
 
+**Elo** _(29/07/2026, 23:50:50 · fact)_
+[FATO] Você compartilhou que aceitava sentir dor física durante a relação porque ver o prazer do seu parceiro trazia uma sensação de satisfação para você naquele momento.
+
+Na psicologia das relações, é relativamente comum observarmos momentos em que flexibilizamos nossos limites físicos ou emocionais para atender às necessidades do outro, muitas vezes buscando manter o vínculo, agradar ou sentir que temos valor para a pessoa. Uma hipótese é que priorizar o bem-estar da outra pessoa em detrimento do seu próprio conforto possa ter gerado um custo emocional que talvez se conecte com a tristeza que você mencionou antes.
+
+Como você se sente ao olhar para essa situação hoje? Essa é uma relação que ainda faz parte da sua vida ou é algo do passado sobre o qual você tem pensado?
+
