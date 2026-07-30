@@ -49,3 +49,12 @@ Se e quando se sentir à vontade, pode me contar um pouco sobre como foi esse pr
 **Você** _(29/07/2026, 23:37:24)_
 Queria dar minha bunda hoje pra ele
 
+**Elo** _(29/07/2026, 23:37:32 · fact)_
+[FATO] Você está sentindo uma vontade forte de ter um contato físico e íntimo com o seu ex hoje.
+
+Desejos e impulsos assim são muito frequentes após o fim de um relacionamento. Eles podem ser movidos por atração física, saudade, busca por familiaridade ou até por uma tentativa do cérebro de aliviar o desconforto e o vazio que o término gera.
+
+[HIPOTESE] Uma hipótese é que esse impulso seja uma forma de buscar o alívio imediato de uma sensação de falta ou desconforto, mesmo que, racionalmente, você saiba que a relação mudou.
+
+Para te ajudar a avaliar esse momento com clareza antes de tomar qualquer atitude: o que você imagina que aconteceria depois se você fosse ao encontro dele hoje? Como você acha que se sentiria amanhã?
+
