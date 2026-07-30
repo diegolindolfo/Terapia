@@ -36,3 +36,6 @@ Cansado
 **Você** _(30/07/2026, 00:09:06)_
 [anamnese: humor] Cansado
 
+**Você** _(30/07/2026, 00:10:16)_
+Eu tenho dois filhos e sou casado a 15 anos. Minha esposa é, de muitas maneiras, ótima, e eu a amo, mas ela é difícil, para dizer 9 mínimo.
+
