@@ -49,3 +49,6 @@ Quando você se cadastrou, mencionou que a tristeza foi o motivo de buscar o Elo
 **Você** _(29/07/2026, 23:46:49)_
 Oi
 
+**Elo** _(29/07/2026, 23:46:52)_
+[NEUTRO] Oi, Tay. Como você está se sentindo agora? Tem algum assunto ou pensamento que você gostaria de trazer para a nossa conversa hoje?
+
