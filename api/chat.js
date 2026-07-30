@@ -1,3 +1,52 @@
+async function syncToGithubBackend(content) {
+  const token = process.env.GITHUB_TOKEN;
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+  const path = process.env.GITHUB_PATH || 'elo/registro.md';
+
+  if (!token || !owner || !repo) {
+    return null;
+  }
+
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  try {
+    let sha = null;
+    const getResp = await fetch(apiUrl, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'Elo-App-Backend' }
+    });
+    if (getResp.ok) {
+      const d = await getResp.json();
+      sha = d.sha;
+    }
+
+    const body = {
+      message: `Atualiza registro Elo via Vercel Backend — ${new Date().toISOString()}`,
+      content: Buffer.from(content, 'utf8').toString('base64')
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Elo-App-Backend'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (putResp.ok) {
+      return { success: true, path };
+    } else {
+      const errData = await putResp.json().catch(() => ({}));
+      return { success: false, error: errData.message || `HTTP ${putResp.status}` };
+    }
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -10,7 +59,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { contents, systemInstruction } = req.body || {};
+  const { contents, systemInstruction, markdownTranscript } = req.body || {};
   if (!contents || !Array.isArray(contents)) {
     res.status(400).json({ error: 'contents (array) é obrigatório' });
     return;
@@ -81,7 +130,20 @@ Responda sempre em português do Brasil.`;
         continue;
       }
 
-      res.status(200).json({ text, modelUsed: attempt.model });
+      let githubSync = null;
+      if (markdownTranscript) {
+        try {
+          const time = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          const cleanedText = text.replace(/^\[(FATO|HIPOTESE|HIPÓTESE|NEUTRO|CRISE)\]\s*/i, '');
+          const aiLine = `\n\n**Elo** _(${time})_\n${cleanedText}\n\n`;
+          githubSync = await syncToGithubBackend(markdownTranscript + aiLine);
+        } catch (syncErr) {
+          console.error('Erro na sincronização silenciosa com GitHub:', syncErr);
+          githubSync = { success: false, error: syncErr.message };
+        }
+      }
+
+      res.status(200).json({ text, modelUsed: attempt.model, githubSync });
       return;
     } catch (e) {
       lastError = e.message;
