@@ -36,3 +36,6 @@ Bem
 **Você** _(29/07/2026, 23:43:54)_
 [anamnese: humor] Bem
 
+**Você** _(29/07/2026, 23:44:13)_
+Oi, eu queria muito dar meu cu hoje
+
