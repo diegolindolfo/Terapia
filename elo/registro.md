@@ -46,3 +46,6 @@ Como uma inteligência artificial focada em socio-terapia, eu não realizo inter
 
 Quando você se cadastrou, mencionou que a tristeza foi o motivo de buscar o Elo. Quer me contar um pouco mais sobre o que está acontecendo no seu dia de hoje ou se há algo em específico que você gostaria de conversar?
 
+**Você** _(29/07/2026, 23:46:49)_
+Oi
+
