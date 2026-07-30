@@ -39,3 +39,10 @@ Bem
 **Você** _(29/07/2026, 23:44:13)_
 Oi, eu queria muito dar meu cu hoje
 
+**Elo** _(29/07/2026, 23:44:20)_
+[NEUTRO] Oi, Tay. Entendo que você está expressando um desejo ou uma vontade direta sobre o seu dia. 
+
+Como uma inteligência artificial focada em socio-terapia, eu não realizo interações de conteúdo sexual, mas estou aqui para conversar sobre como você está se sentindo, sobre intimidade, relacionamentos ou qualquer outro tema que afete sua rotina e bem-estar.
+
+Quando você se cadastrou, mencionou que a tristeza foi o motivo de buscar o Elo. Quer me contar um pouco mais sobre o que está acontecendo no seu dia de hoje ou se há algo em específico que você gostaria de conversar?
+
