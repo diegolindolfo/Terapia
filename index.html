@@ -63,15 +63,9 @@
   .thread-line.fact { background: var(--sage); }
   .thread-line.hypothesis { background: var(--plum); }
   .thread-line.neutral { background: var(--line); }
-  .bubble { max-width: 78%; padding: 11px 15px; border-radius: 15px; font-size: 14px; line-height: 1.5; white-space: normal; word-break: break-word; }
+  .bubble { max-width: 78%; padding: 11px 15px; border-radius: 15px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
   .bubble.ai { background: var(--cloud); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
   .bubble.user { background: var(--plum-deep); color: #F6F5F8; border-bottom-right-radius: 4px; }
-  .bubble a { color: inherit; text-decoration: underline; font-weight: 500; }
-  .bubble.ai a { color: var(--plum); }
-  .bubble ul, .bubble ol { margin: 6px 0; padding-left: 20px; }
-  .bubble li { margin-bottom: 4px; }
-  .bubble code { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; background: rgba(0, 0, 0, 0.06); padding: 2px 4px; border-radius: 4px; }
-  .bubble.user code { background: rgba(255, 255, 255, 0.15); }
   .model-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink-soft); margin-top: 4px; margin-left: 13px; }
   .system-note { align-self: center; font-size: 12.5px; color: var(--ink-soft); font-style: italic; text-align: center; max-width: 90%; }
   .choice-row { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 0 13px; }
@@ -140,21 +134,9 @@
   </header>
 
   <div class="settings" id="settingsPanel">
-    <div class="settings-note">A chave do Gemini fica só no servidor (variável de ambiente da Vercel) — este painel só cuida da sincronização com o GitHub.</div>
-    <h3>Sincronização com GitHub (opcional)</h3>
-    <div class="settings-note">Salva o registro completo automaticamente como um arquivo de texto num repositório seu, a cada troca de mensagem.</div>
-    <label for="ghToken">Token de acesso pessoal (repo scope)</label>
-    <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off">
-    <label for="ghOwner">Usuário/organização</label>
-    <input type="text" id="ghOwner" placeholder="seu-usuario">
-    <label for="ghRepo">Repositório</label>
-    <input type="text" id="ghRepo" placeholder="meus-registros">
-    <label for="ghPath">Caminho do arquivo</label>
-    <input type="text" id="ghPath" value="elo/registro.md">
-    <div class="settings-note warn">Registro de conversas terapêuticas é dado sensível de saúde. Se o repositório for público, qualquer pessoa pode ler. Recomendo repositório <b>privado</b>. Se mesmo assim quiser público, confirme abaixo.</div>
-    <label class="checkbox-row"><input type="checkbox" id="ghPublicConfirm"> Entendo o risco e quero prosseguir mesmo assim</label>
-    <button class="btn-mini" id="saveGithubBtn">Salvar e ativar sincronização</button>
-    <div class="settings-note" id="syncCurrentStatus"></div>
+    <div class="settings-note">A chave do Gemini e o backup no GitHub ficam configurados no servidor (variáveis de ambiente da Vercel) — não precisa colar nada aqui.</div>
+    <div class="settings-note">Backup automático: se o servidor tiver <code>GITHUB_TOKEN</code>, <code>GITHUB_OWNER</code> e <code>GITHUB_REPO</code> configurados, cada mensagem é salva sozinha em <code>elo/registro.md</code> (ou o caminho definido em <code>GITHUB_PATH</code>). Sem isso, o chat funciona normalmente — só sem backup automático.</div>
+    <div class="settings-note warn">Registro de conversas terapêuticas é dado sensível de saúde. Se o repositório de destino for público, qualquer pessoa pode ler o conteúdo.</div>
   </div>
 
   <div class="thread" id="thread"></div>
@@ -185,7 +167,6 @@ const ANAMNESE_STEPS = [
   { key: 'humor', question: 'Como você descreveria seu humor geral nos últimos dias?', type: 'choice', options: ['Bem', 'Neutro', 'Cansado', 'Tenso'] }
 ];
 
-let githubConfig = null;
 let history = [];
 let transcriptLog = [];
 let anamneseAnswers = {};
@@ -200,220 +181,18 @@ const resetBtn = document.getElementById('resetBtn');
 const exportBtn = document.getElementById('exportBtn');
 const gearBtn = document.getElementById('gearBtn');
 const settingsPanel = document.getElementById('settingsPanel');
-const ghToken = document.getElementById('ghToken');
-const ghOwner = document.getElementById('ghOwner');
-const ghRepo = document.getElementById('ghRepo');
-const ghPath = document.getElementById('ghPath');
-const ghPublicConfirm = document.getElementById('ghPublicConfirm');
-const saveGithubBtn = document.getElementById('saveGithubBtn');
-const syncCurrentStatus = document.getElementById('syncCurrentStatus');
 const syncStatusMini = document.getElementById('syncStatusMini');
-
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('elo_offline_db', 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('outbox')) {
-        db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
-      }
-    };
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function addToOutbox(text) {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('outbox', 'readwrite');
-    const store = tx.objectStore('outbox');
-    const item = { text, ts: new Date().toISOString() };
-    const req = store.add(item);
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function getOutbox() {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('outbox', 'readonly');
-    const store = tx.objectStore('outbox');
-    const req = store.getAll();
-    req.onsuccess = (e) => resolve(e.target.result || []);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function removeFromOutbox(id) {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('outbox', 'readwrite');
-    const store = tx.objectStore('outbox');
-    const req = store.delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-let isProcessingOutbox = false;
-async function processOutbox() {
-  if (isProcessingOutbox) return;
-  if (!navigator.onLine) return;
-
-  try {
-    const items = await getOutbox();
-    if (items.length === 0) return;
-
-    isProcessingOutbox = true;
-
-    for (const item of items) {
-      if (!navigator.onLine) break;
-
-      addTyping();
-
-      try {
-        const tempHistory = [...history, { role: 'user', parts: [{ text: item.text }] }];
-
-        // Gera o markdown atualizado incluindo a mensagem pendente temporariamente
-        transcriptLog.push({ role: 'user', text: item.text, tag: 'neutral', ts: item.ts });
-        const currentMarkdown = buildTranscriptMarkdown();
-        transcriptLog.pop();
-
-        const { text: replyText, modelUsed, githubSync } = await callBackend(tempHistory, anamneseSummary, currentMarkdown);
-
-        removeTyping();
-
-        const el = document.getElementById(`user-msg-pending-${item.id}`);
-        if (el) {
-          el.removeAttribute('id');
-          el.style.opacity = '';
-          const clock = el.querySelector('.pending-clock');
-          if (clock) clock.remove();
-        }
-
-        logMessage('user', item.text, 'neutral');
-        history.push({ role: 'user', parts: [{ text: item.text }] });
-
-        addAiMessage(replyText, modelUsed);
-        history.push({ role: 'model', parts: [{ text: replyText }] });
-
-        if (githubSync) {
-          if (githubSync.success) setSyncStatus('ok', 'sincronizado aut.');
-          else setSyncStatus('err', 'falha sync: ' + githubSync.error);
-        }
-
-        await removeFromOutbox(item.id);
-      } catch (err) {
-        removeTyping();
-        console.error('Falha ao processar item do outbox:', err);
-        break;
-      }
-    }
-  } catch (err) {
-    console.error('Erro no processOutbox:', err);
-  } finally {
-    isProcessingOutbox = false;
-  }
-}
 
 function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
 function lsGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
 function lsSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error(e); } }
 
-function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-
-function renderMarkdown(text) {
-  let escaped = escapeHtml(text);
-  const lines = escaped.split('\n');
-  let inUnorderedList = false;
-  let inOrderedList = false;
-  let processedLines = [];
-
-  for (let line of lines) {
-    const trimmedLine = line.trim();
-    const ulMatch = trimmedLine.match(/^([*\-])\s+(.*)$/);
-    const olMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
-
-    if (ulMatch) {
-      if (inOrderedList) {
-        processedLines.push('</ol>');
-        inOrderedList = false;
-      }
-      if (!inUnorderedList) {
-        processedLines.push('<ul>');
-        inUnorderedList = true;
-      }
-      processedLines.push(`<li>${ulMatch[2]}</li>`);
-    } else if (olMatch) {
-      if (inUnorderedList) {
-        processedLines.push('</ul>');
-        inUnorderedList = false;
-      }
-      if (!inOrderedList) {
-        processedLines.push('<ol>');
-        inOrderedList = true;
-      }
-      processedLines.push(`<li>${olMatch[2]}</li>`);
-    } else {
-      if (inUnorderedList) {
-        processedLines.push('</ul>');
-        inUnorderedList = false;
-      }
-      if (inOrderedList) {
-        processedLines.push('</ol>');
-        inOrderedList = false;
-      }
-      processedLines.push(line);
-    }
-  }
-  if (inUnorderedList) processedLines.push('</ul>');
-  if (inOrderedList) processedLines.push('</ol>');
-
-  let finalParts = [];
-  for (let i = 0; i < processedLines.length; i++) {
-    const current = processedLines[i];
-    const isTag = current.startsWith('<ul') || current.startsWith('</ul>') ||
-                  current.startsWith('<ol') || current.startsWith('</ol>') ||
-                  current.startsWith('<li') || current.startsWith('</li>');
-    finalParts.push(current);
-    if (!isTag && i < processedLines.length - 1) {
-      const next = processedLines[i+1];
-      const nextIsTag = next.startsWith('<ul') || next.startsWith('</ul>') ||
-                        next.startsWith('<ol') || next.startsWith('</ol>') ||
-                        next.startsWith('<li') || next.startsWith('</li>');
-      if (!nextIsTag) {
-        finalParts.push('<br>');
-      }
-    }
-  }
-
-  let html = finalParts.join('');
-
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-  html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkText, url) => {
-    const u = url.trim();
-    if (u.toLowerCase().startsWith('javascript:')) return escapeHtml(match);
-    return `<a href="${u}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-  });
-
-  return html;
-}
-
-function addUserMessage(text, skipLog, pendingId) {
+function addUserMessage(text, skipLog) {
   const row = document.createElement('div');
   row.className = 'row user';
-  if (pendingId) {
-    row.id = `user-msg-pending-${pendingId}`;
-    row.style.opacity = '0.6';
-  }
   const bubble = document.createElement('div');
   bubble.className = 'bubble user';
-  bubble.innerHTML = renderMarkdown(text) + (pendingId ? ' <span class="pending-clock" style="font-size: 11px; opacity: 0.8;">\uD83D\uDD52</span>' : '');
+  bubble.textContent = text;
   row.appendChild(bubble);
   thread.appendChild(row);
   scrollToBottom();
@@ -430,6 +209,7 @@ function parseTag(text) {
   if (raw === 'CRISE') return { tag: 'crisis', clean };
   return { tag: 'neutral', clean };
 }
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 function addCrisisBanner(text) {
   const banner = document.createElement('div');
@@ -456,7 +236,7 @@ function addAiMessage(rawText, modelUsed, skipLog) {
   line.className = 'thread-line ' + tag;
   const bubble = document.createElement('div');
   bubble.className = 'bubble ai';
-  bubble.innerHTML = renderMarkdown(clean);
+  bubble.textContent = clean;
   row.appendChild(line);
   row.appendChild(bubble);
   thread.appendChild(row);
@@ -516,40 +296,35 @@ function buildTranscriptMarkdown() {
 }
 
 async function syncToGithub() {
-  if (!githubConfig || !githubConfig.enabled) return;
-  const { token, owner, repo, path } = githubConfig;
-  if (!token || !owner || !repo || !path) return;
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
   try {
-    let sha = null;
-    const getResp = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
-    if (getResp.ok) { const d = await getResp.json(); sha = d.sha; }
     const content = buildTranscriptMarkdown();
-    const body = { message: `Atualiza registro Elo — ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(content))) };
-    if (sha) body.sha = sha;
-    const putResp = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    const resp = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
     });
-    if (putResp.ok) setSyncStatus('ok', 'sincronizado');
-    else { const e = await putResp.json().catch(()=>({})); setSyncStatus('err', 'falha: ' + (e.message || putResp.status)); }
-  } catch (e) { setSyncStatus('err', 'falha: ' + e.message); }
+    const data = await resp.json();
+    if (data.skipped) { setSyncStatus('off', ''); return; }
+    if (!resp.ok) { setSyncStatus('err', 'falha: ' + (data.error || resp.status)); return; }
+    setSyncStatus('ok', 'sincronizado');
+  } catch (e) {
+    setSyncStatus('err', 'falha: ' + e.message);
+  }
 }
 function setSyncStatus(kind, text) {
   syncStatusMini.className = 'sync-status ' + kind;
-  syncStatusMini.textContent = `github: ${text} · `;
+  syncStatusMini.textContent = text ? `github: ${text} · ` : '';
 }
 
-async function callBackend(contents, systemInstruction, markdownTranscript) {
+async function callBackend(contents, systemInstruction) {
   const resp = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents, systemInstruction, markdownTranscript })
+    body: JSON.stringify({ contents, systemInstruction })
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
-  return data; // { text, modelUsed, githubSync }
+  return data; // { text, modelUsed }
 }
 
 function renderAnamneseStep() {
@@ -607,62 +382,20 @@ async function sendMessage() {
     }
   }
 
-  input.value = ''; input.style.height = 'auto';
-
-  if (!navigator.onLine) {
-    const pendingId = await addToOutbox(text);
-    addUserMessage(text, true, pendingId);
-    sendBtn.disabled = false;
-    input.focus();
-    return;
-  }
-
-  const tempMsgId = 'user-msg-temp-' + Date.now();
-  addUserMessage(text, false);
-  const lastRow = thread.lastElementChild;
-  if (lastRow && lastRow.classList.contains('user')) {
-    lastRow.id = tempMsgId;
-  }
-
+  addUserMessage(text);
   history.push({ role: 'user', parts: [{ text }] });
+  input.value = ''; input.style.height = 'auto';
   sendBtn.disabled = true;
   addTyping();
 
   try {
-    const currentMarkdown = buildTranscriptMarkdown();
-    const { text: replyText, modelUsed, githubSync } = await callBackend(history, anamneseSummary, currentMarkdown);
+    const { text: replyText, modelUsed } = await callBackend(history, anamneseSummary);
     removeTyping();
     addAiMessage(replyText, modelUsed);
     history.push({ role: 'model', parts: [{ text: replyText }] });
-
-    if (githubSync) {
-      if (githubSync.success) setSyncStatus('ok', 'sincronizado aut.');
-      else setSyncStatus('err', 'falha sync: ' + githubSync.error);
-    }
-
-    const el = document.getElementById(tempMsgId);
-    if (el) el.removeAttribute('id');
   } catch (err) {
     removeTyping();
-
-    const isNetworkError = !navigator.onLine || err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('Failed to fetch');
-    if (isNetworkError) {
-      const pendingId = await addToOutbox(text);
-      const el = document.getElementById(tempMsgId);
-      if (el) {
-        el.id = `user-msg-pending-${pendingId}`;
-        el.style.opacity = '0.6';
-        const bubble = el.querySelector('.bubble.user');
-        if (bubble) {
-          bubble.innerHTML += ' <span class="pending-clock" style="font-size: 11px; opacity: 0.8;">\uD83D\uDD52</span>';
-        }
-      }
-      transcriptLog.pop();
-      history.pop();
-      persistAndSync();
-    } else {
-      addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
-    }
+    addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
   } finally {
     sendBtn.disabled = false;
     input.focus();
@@ -670,22 +403,6 @@ async function sendMessage() {
 }
 
 gearBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
-
-saveGithubBtn.addEventListener('click', () => {
-  const cfg = {
-    token: ghToken.value.trim(), owner: ghOwner.value.trim(), repo: ghRepo.value.trim(),
-    path: ghPath.value.trim() || 'elo/registro.md', enabled: false
-  };
-  if (!cfg.token || !cfg.owner || !cfg.repo) { syncCurrentStatus.textContent = 'Preencha token, usuário e repositório.'; return; }
-  if (!ghPublicConfirm.checked) { syncCurrentStatus.textContent = 'Marque a confirmação acima pra ativar.'; return; }
-  cfg.enabled = true;
-  githubConfig = cfg;
-  lsSet('elo:github-config', cfg);
-  ghToken.value = '';
-  syncCurrentStatus.textContent = 'Sincronização ativa em ' + cfg.owner + '/' + cfg.repo + '/' + cfg.path;
-  setSyncStatus('ok', 'ativo');
-  if (transcriptLog.length) syncToGithub();
-});
 
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 100) + 'px'; });
@@ -718,7 +435,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
-window.addEventListener('online', processOutbox);
 sendBtn.addEventListener('click', sendMessage);
 
 exportBtn.addEventListener('click', () => {
@@ -743,9 +459,7 @@ function boot() {
   const savedTranscript = lsGet('elo:transcript');
   const savedAnamnese = lsGet('elo:anamnese');
   const savedDone = lsGet('elo:anamnese-done');
-  const savedGithub = lsGet('elo:github-config');
 
-  if (savedGithub) { githubConfig = savedGithub; setSyncStatus('ok', 'ativo'); }
   if (savedAnamnese) anamneseAnswers = savedAnamnese;
   if (savedDone) anamneseDone = true;
 
@@ -766,9 +480,6 @@ function boot() {
     input.disabled = true; sendBtn.disabled = true;
     renderAnamneseStep();
   }
-
-  // Tenta processar o outbox na inicialização se houver itens
-  processOutbox();
 }
 boot();
 </script>
