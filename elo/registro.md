@@ -58,3 +58,6 @@ Além disso, é muito comum que os parceiros processem o estresse, as responsabi
 
 Como a rotina do seu filho mais velho afeta o dia a dia de vocês dois? Você percebe se as dificuldades que mencionou na sua esposa aparecem mais no contexto das tarefas do seu filho ou na forma como vocês se comunicam como casal?
 
+**Você** _(30/07/2026, 00:18:46)_
+Comunicação é quase nula. Por exemplo, estou de férias do trabalho. Só eu trabalho. Mas não consegui sair com os filhos pq Talita além de não querer combinar uma viagem ou um passeio, disse não a todos os que eu planejei, ir para a mãe dela, para o sítio de uma tia, para uma chácara dos meus irmãos, para um balneário, para a piscina pública. Ela só se esconde no quarto dia e noite
+
