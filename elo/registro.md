@@ -39,3 +39,10 @@ Neutro
 **Você** _(29/07/2026, 23:34:15)_
 Oi
 
+**Elo** _(29/07/2026, 23:34:19)_
+[NEUTRO] Olá, Tay. Seja bem-vindo ao Elo. 
+
+Vi no seu cadastro que você passou por um término recente. Como estão as coisas por aí hoje? 
+
+Se e quando se sentir à vontade, pode me contar um pouco sobre como foi esse processo ou sobre o que tem passado pela sua cabeça ultimamente. Como podemos começar?
+
