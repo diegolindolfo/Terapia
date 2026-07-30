@@ -8,6 +8,9 @@ Diego
 **O que te trouxe até aqui hoje?**
 Confusão mental
 
+**Você já fez acompanhamento terapêutico antes?**
+Não
+
 ---
 
 ## Conversa
@@ -17,4 +20,7 @@ Confusão mental
 
 **Você** _(30/07/2026, 00:08:57)_
 [anamnese: motivo] Confusão mental
+
+**Você** _(30/07/2026, 00:08:59)_
+[anamnese: terapia_previa] Não
 
