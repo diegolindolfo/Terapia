@@ -14,6 +14,9 @@ Não
 **Nas últimas duas semanas, você teve pensamentos de se machucar ou de que não valeria a pena continuar?**
 Não
 
+**Como você descreveria seu humor geral nos últimos dias?**
+Cansado
+
 ---
 
 ## Conversa
@@ -29,4 +32,7 @@ Não
 
 **Você** _(30/07/2026, 00:09:04)_
 [anamnese: seguranca] Não
+
+**Você** _(30/07/2026, 00:09:06)_
+[anamnese: humor] Cansado
 
