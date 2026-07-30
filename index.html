@@ -275,7 +275,13 @@ async function processOutbox() {
 
       try {
         const tempHistory = [...history, { role: 'user', parts: [{ text: item.text }] }];
-        const { text: replyText, modelUsed } = await callBackend(tempHistory, anamneseSummary);
+
+        // Gera o markdown atualizado incluindo a mensagem pendente temporariamente
+        transcriptLog.push({ role: 'user', text: item.text, tag: 'neutral', ts: item.ts });
+        const currentMarkdown = buildTranscriptMarkdown();
+        transcriptLog.pop();
+
+        const { text: replyText, modelUsed, githubSync } = await callBackend(tempHistory, anamneseSummary, currentMarkdown);
 
         removeTyping();
 
@@ -292,6 +298,11 @@ async function processOutbox() {
 
         addAiMessage(replyText, modelUsed);
         history.push({ role: 'model', parts: [{ text: replyText }] });
+
+        if (githubSync) {
+          if (githubSync.success) setSyncStatus('ok', 'sincronizado aut.');
+          else setSyncStatus('err', 'falha sync: ' + githubSync.error);
+        }
 
         await removeFromOutbox(item.id);
       } catch (err) {
@@ -527,18 +538,18 @@ async function syncToGithub() {
 }
 function setSyncStatus(kind, text) {
   syncStatusMini.className = 'sync-status ' + kind;
-  syncStatusMini.textContent = githubConfig && githubConfig.enabled ? `github: ${text} · ` : '';
+  syncStatusMini.textContent = `github: ${text} · `;
 }
 
-async function callBackend(contents, systemInstruction) {
+async function callBackend(contents, systemInstruction, markdownTranscript) {
   const resp = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents, systemInstruction })
+    body: JSON.stringify({ contents, systemInstruction, markdownTranscript })
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
-  return data; // { text, modelUsed }
+  return data; // { text, modelUsed, githubSync }
 }
 
 function renderAnamneseStep() {
@@ -618,10 +629,16 @@ async function sendMessage() {
   addTyping();
 
   try {
-    const { text: replyText, modelUsed } = await callBackend(history, anamneseSummary);
+    const currentMarkdown = buildTranscriptMarkdown();
+    const { text: replyText, modelUsed, githubSync } = await callBackend(history, anamneseSummary, currentMarkdown);
     removeTyping();
     addAiMessage(replyText, modelUsed);
     history.push({ role: 'model', parts: [{ text: replyText }] });
+
+    if (githubSync) {
+      if (githubSync.success) setSyncStatus('ok', 'sincronizado aut.');
+      else setSyncStatus('err', 'falha sync: ' + githubSync.error);
+    }
 
     const el = document.getElementById(tempMsgId);
     if (el) el.removeAttribute('id');
