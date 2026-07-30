@@ -149,7 +149,6 @@
     <div class="hint">
       <span>Enter envia · Shift+Enter quebra linha</span>
       <span>
-        <span class="sync-status" id="syncStatusMini"></span>
         <button id="exportBtn">exportar .md</button> ·
         <button id="resetBtn">reiniciar</button>
       </span>
@@ -181,7 +180,7 @@ const resetBtn = document.getElementById('resetBtn');
 const exportBtn = document.getElementById('exportBtn');
 const gearBtn = document.getElementById('gearBtn');
 const settingsPanel = document.getElementById('settingsPanel');
-const syncStatusMini = document.getElementById('syncStatusMini');
+
 
 function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
 function lsGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
@@ -312,8 +311,9 @@ async function syncToGithub() {
   }
 }
 function setSyncStatus(kind, text) {
-  syncStatusMini.className = 'sync-status ' + kind;
-  syncStatusMini.textContent = text ? `github: ${text} · ` : '';
+  if (!text) return;
+  if (kind === 'err') console.warn('[Elo backup] ' + text);
+  else console.log('[Elo backup] ' + text);
 }
 
 async function callBackend(contents, systemInstruction) {
