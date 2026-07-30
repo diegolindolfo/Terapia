@@ -60,3 +60,6 @@ Oi
 
 Como posso te acompanhar hoje?
 
+**Você** _(29/07/2026, 23:50:41)_
+Meu cu doía tanto, mas eu gostava de ver ele gozando. Aceitava sentir dor por ele, você acredita
+
