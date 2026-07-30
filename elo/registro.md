@@ -61,3 +61,14 @@ Como a rotina do seu filho mais velho afeta o dia a dia de vocês dois? Você pe
 **Você** _(30/07/2026, 00:18:46)_
 Comunicação é quase nula. Por exemplo, estou de férias do trabalho. Só eu trabalho. Mas não consegui sair com os filhos pq Talita além de não querer combinar uma viagem ou um passeio, disse não a todos os que eu planejei, ir para a mãe dela, para o sítio de uma tia, para uma chácara dos meus irmãos, para um balneário, para a piscina pública. Ela só se esconde no quarto dia e noite
 
+**Elo** _(30/07/2026, 00:18:56 · hypothesis)_
+[HIPOTESE] Diego, a situação que você descreve traz elementos muito claros e preocupantes. O fato de você estar de férias e não conseguir aproveitar esse tempo com seus filhos, aliado à recusa de todas as propostas, gera uma sensação profunda de frustração e bloqueio. 
+
+Ao mesmo tempo, o comportamento da Talita — isolar-se no quarto dia e noite e esquivar-se de qualquer plano — pode ser um indicador de um quadro grave de esgotamento emocional (burnout parental), sobrecarga extrema ou até mesmo um episódio depressivo. Cuidar de um filho autista e de outra criança no dia a dia, frequentemente sem pausas ou sem uma rede de apoio estruturada, pode levar a um colapso de energia onde a pessoa simplesmente se "desliga" e não consegue mais interagir.
+
+Isso cria um ciclo doloroso: você se sente sozinho, sobrecarregado e sem conseguir se comunicar, enquanto ela parece inacessível.
+
+Para eu entender melhor o quadro e pensarmos em caminhos práticos:
+1. Esse isolamento da Talita no quarto é algo recente, que se intensificou agora nas suas férias, ou já vem acontecendo há semanas ou meses?
+2. Como você tem conseguido gerenciar o cuidado dos dois meninos ao longo do dia enquanto ela fica no quarto?
+
