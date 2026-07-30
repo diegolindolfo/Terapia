@@ -63,9 +63,15 @@
   .thread-line.fact { background: var(--sage); }
   .thread-line.hypothesis { background: var(--plum); }
   .thread-line.neutral { background: var(--line); }
-  .bubble { max-width: 78%; padding: 11px 15px; border-radius: 15px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+  .bubble { max-width: 78%; padding: 11px 15px; border-radius: 15px; font-size: 14px; line-height: 1.5; white-space: normal; word-break: break-word; }
   .bubble.ai { background: var(--cloud); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
   .bubble.user { background: var(--plum-deep); color: #F6F5F8; border-bottom-right-radius: 4px; }
+  .bubble a { color: inherit; text-decoration: underline; font-weight: 500; }
+  .bubble.ai a { color: var(--plum); }
+  .bubble ul, .bubble ol { margin: 6px 0; padding-left: 20px; }
+  .bubble li { margin-bottom: 4px; }
+  .bubble code { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; background: rgba(0, 0, 0, 0.06); padding: 2px 4px; border-radius: 4px; }
+  .bubble.user code { background: rgba(255, 255, 255, 0.15); }
   .model-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink-soft); margin-top: 4px; margin-left: 13px; }
   .system-note { align-self: center; font-size: 12.5px; color: var(--ink-soft); font-style: italic; text-align: center; max-width: 90%; }
   .choice-row { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 0 13px; }
@@ -203,16 +209,200 @@ const saveGithubBtn = document.getElementById('saveGithubBtn');
 const syncCurrentStatus = document.getElementById('syncCurrentStatus');
 const syncStatusMini = document.getElementById('syncStatusMini');
 
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('elo_offline_db', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('outbox')) {
+        db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function addToOutbox(text) {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('outbox', 'readwrite');
+    const store = tx.objectStore('outbox');
+    const item = { text, ts: new Date().toISOString() };
+    const req = store.add(item);
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getOutbox() {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('outbox', 'readonly');
+    const store = tx.objectStore('outbox');
+    const req = store.getAll();
+    req.onsuccess = (e) => resolve(e.target.result || []);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function removeFromOutbox(id) {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('outbox', 'readwrite');
+    const store = tx.objectStore('outbox');
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+let isProcessingOutbox = false;
+async function processOutbox() {
+  if (isProcessingOutbox) return;
+  if (!navigator.onLine) return;
+
+  try {
+    const items = await getOutbox();
+    if (items.length === 0) return;
+
+    isProcessingOutbox = true;
+
+    for (const item of items) {
+      if (!navigator.onLine) break;
+
+      addTyping();
+
+      try {
+        const tempHistory = [...history, { role: 'user', parts: [{ text: item.text }] }];
+        const { text: replyText, modelUsed } = await callBackend(tempHistory, anamneseSummary);
+
+        removeTyping();
+
+        const el = document.getElementById(`user-msg-pending-${item.id}`);
+        if (el) {
+          el.removeAttribute('id');
+          el.style.opacity = '';
+          const clock = el.querySelector('.pending-clock');
+          if (clock) clock.remove();
+        }
+
+        logMessage('user', item.text, 'neutral');
+        history.push({ role: 'user', parts: [{ text: item.text }] });
+
+        addAiMessage(replyText, modelUsed);
+        history.push({ role: 'model', parts: [{ text: replyText }] });
+
+        await removeFromOutbox(item.id);
+      } catch (err) {
+        removeTyping();
+        console.error('Falha ao processar item do outbox:', err);
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('Erro no processOutbox:', err);
+  } finally {
+    isProcessingOutbox = false;
+  }
+}
+
 function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
 function lsGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
 function lsSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { console.error(e); } }
 
-function addUserMessage(text, skipLog) {
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function renderMarkdown(text) {
+  let escaped = escapeHtml(text);
+  const lines = escaped.split('\n');
+  let inUnorderedList = false;
+  let inOrderedList = false;
+  let processedLines = [];
+
+  for (let line of lines) {
+    const trimmedLine = line.trim();
+    const ulMatch = trimmedLine.match(/^([*\-])\s+(.*)$/);
+    const olMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
+
+    if (ulMatch) {
+      if (inOrderedList) {
+        processedLines.push('</ol>');
+        inOrderedList = false;
+      }
+      if (!inUnorderedList) {
+        processedLines.push('<ul>');
+        inUnorderedList = true;
+      }
+      processedLines.push(`<li>${ulMatch[2]}</li>`);
+    } else if (olMatch) {
+      if (inUnorderedList) {
+        processedLines.push('</ul>');
+        inUnorderedList = false;
+      }
+      if (!inOrderedList) {
+        processedLines.push('<ol>');
+        inOrderedList = true;
+      }
+      processedLines.push(`<li>${olMatch[2]}</li>`);
+    } else {
+      if (inUnorderedList) {
+        processedLines.push('</ul>');
+        inUnorderedList = false;
+      }
+      if (inOrderedList) {
+        processedLines.push('</ol>');
+        inOrderedList = false;
+      }
+      processedLines.push(line);
+    }
+  }
+  if (inUnorderedList) processedLines.push('</ul>');
+  if (inOrderedList) processedLines.push('</ol>');
+
+  let finalParts = [];
+  for (let i = 0; i < processedLines.length; i++) {
+    const current = processedLines[i];
+    const isTag = current.startsWith('<ul') || current.startsWith('</ul>') ||
+                  current.startsWith('<ol') || current.startsWith('</ol>') ||
+                  current.startsWith('<li') || current.startsWith('</li>');
+    finalParts.push(current);
+    if (!isTag && i < processedLines.length - 1) {
+      const next = processedLines[i+1];
+      const nextIsTag = next.startsWith('<ul') || next.startsWith('</ul>') ||
+                        next.startsWith('<ol') || next.startsWith('</ol>') ||
+                        next.startsWith('<li') || next.startsWith('</li>');
+      if (!nextIsTag) {
+        finalParts.push('<br>');
+      }
+    }
+  }
+
+  let html = finalParts.join('');
+
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+  html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+  html = html.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkText, url) => {
+    const u = url.trim();
+    if (u.toLowerCase().startsWith('javascript:')) return escapeHtml(match);
+    return `<a href="${u}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+  });
+
+  return html;
+}
+
+function addUserMessage(text, skipLog, pendingId) {
   const row = document.createElement('div');
   row.className = 'row user';
+  if (pendingId) {
+    row.id = `user-msg-pending-${pendingId}`;
+    row.style.opacity = '0.6';
+  }
   const bubble = document.createElement('div');
   bubble.className = 'bubble user';
-  bubble.textContent = text;
+  bubble.innerHTML = renderMarkdown(text) + (pendingId ? ' <span class="pending-clock" style="font-size: 11px; opacity: 0.8;">\uD83D\uDD52</span>' : '');
   row.appendChild(bubble);
   thread.appendChild(row);
   scrollToBottom();
@@ -229,7 +419,6 @@ function parseTag(text) {
   if (raw === 'CRISE') return { tag: 'crisis', clean };
   return { tag: 'neutral', clean };
 }
-function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 function addCrisisBanner(text) {
   const banner = document.createElement('div');
@@ -256,7 +445,7 @@ function addAiMessage(rawText, modelUsed, skipLog) {
   line.className = 'thread-line ' + tag;
   const bubble = document.createElement('div');
   bubble.className = 'bubble ai';
-  bubble.textContent = clean;
+  bubble.innerHTML = renderMarkdown(clean);
   row.appendChild(line);
   row.appendChild(bubble);
   thread.appendChild(row);
@@ -407,9 +596,24 @@ async function sendMessage() {
     }
   }
 
-  addUserMessage(text);
-  history.push({ role: 'user', parts: [{ text }] });
   input.value = ''; input.style.height = 'auto';
+
+  if (!navigator.onLine) {
+    const pendingId = await addToOutbox(text);
+    addUserMessage(text, true, pendingId);
+    sendBtn.disabled = false;
+    input.focus();
+    return;
+  }
+
+  const tempMsgId = 'user-msg-temp-' + Date.now();
+  addUserMessage(text, false);
+  const lastRow = thread.lastElementChild;
+  if (lastRow && lastRow.classList.contains('user')) {
+    lastRow.id = tempMsgId;
+  }
+
+  history.push({ role: 'user', parts: [{ text }] });
   sendBtn.disabled = true;
   addTyping();
 
@@ -418,9 +622,30 @@ async function sendMessage() {
     removeTyping();
     addAiMessage(replyText, modelUsed);
     history.push({ role: 'model', parts: [{ text: replyText }] });
+
+    const el = document.getElementById(tempMsgId);
+    if (el) el.removeAttribute('id');
   } catch (err) {
     removeTyping();
-    addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
+
+    const isNetworkError = !navigator.onLine || err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('Failed to fetch');
+    if (isNetworkError) {
+      const pendingId = await addToOutbox(text);
+      const el = document.getElementById(tempMsgId);
+      if (el) {
+        el.id = `user-msg-pending-${pendingId}`;
+        el.style.opacity = '0.6';
+        const bubble = el.querySelector('.bubble.user');
+        if (bubble) {
+          bubble.innerHTML += ' <span class="pending-clock" style="font-size: 11px; opacity: 0.8;">\uD83D\uDD52</span>';
+        }
+      }
+      transcriptLog.pop();
+      history.pop();
+      persistAndSync();
+    } else {
+      addAiMessage('[NEUTRO] Não consegui responder agora: ' + err.message, null);
+    }
   } finally {
     sendBtn.disabled = false;
     input.focus();
@@ -476,6 +701,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+window.addEventListener('online', processOutbox);
 sendBtn.addEventListener('click', sendMessage);
 
 exportBtn.addEventListener('click', () => {
@@ -523,6 +749,9 @@ function boot() {
     input.disabled = true; sendBtn.disabled = true;
     renderAnamneseStep();
   }
+
+  // Tenta processar o outbox na inicialização se houver itens
+  processOutbox();
 }
 boot();
 </script>
