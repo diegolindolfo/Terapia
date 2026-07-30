@@ -49,3 +49,12 @@ Para que eu possa entender melhor o seu cenário e te ajudar a organizar esses p
 **Você** _(30/07/2026, 00:11:32)_
 Nosso filho mais velho, de 7 anos é autista.
 
+**Elo** _(30/07/2026, 00:11:40 · fact)_
+[FATO] Entendo, Diego. O fato de o filho mais velho de vocês ser autista é uma dimensão crucial dessa dinâmica. 
+
+[HIPOTESE] Criar uma criança no espectro autista exige uma quantidade significativa de energia, adaptação constante e recursos emocionais da família. É frequente que pais nessa situação enfrentem altos níveis de estresse e até sobrecarga crônica. Uma hipótese é que parte do cansaço e da confusão mental que você sente venha desse acúmulo diário de demandas, somado às exigências do casamento e do seu outro filho.
+
+Além disso, é muito comum que os parceiros processem o estresse, as responsabilidades e a rotina do cuidado de maneiras completamente diferentes, o que costuma gerar atritos, falhas de comunicação ou a sensação de que o outro está tornando as coisas "difíceis".
+
+Como a rotina do seu filho mais velho afeta o dia a dia de vocês dois? Você percebe se as dificuldades que mencionou na sua esposa aparecem mais no contexto das tarefas do seu filho ou na forma como vocês se comunicam como casal?
+
