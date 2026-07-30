@@ -11,6 +11,9 @@ Confusão mental
 **Você já fez acompanhamento terapêutico antes?**
 Não
 
+**Nas últimas duas semanas, você teve pensamentos de se machucar ou de que não valeria a pena continuar?**
+Não
+
 ---
 
 ## Conversa
@@ -23,4 +26,7 @@ Não
 
 **Você** _(30/07/2026, 00:08:59)_
 [anamnese: terapia_previa] Não
+
+**Você** _(30/07/2026, 00:09:04)_
+[anamnese: seguranca] Não
 
