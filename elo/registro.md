@@ -55,3 +55,8 @@ Oi
 **Você** _(29/07/2026, 23:47:33)_
 Oi
 
+**Elo** _(29/07/2026, 23:47:37)_
+[NEUTRO] Oi, Tay. Estou por aqui. Quando se sentir à vontade para compartilhar o que está se passando com você, é só falar. 
+
+Como posso te acompanhar hoje?
+
