@@ -95,15 +95,22 @@ Responda sempre em português do Brasil.`;
 
   // Lista de modelos Gemini com fallback inteligente
   const attempts = [
-    { model: process.env.GEMINI_MODEL || 'gemini-3.6-flash' },
-    { model: 'gemini-2.0-flash' },
-    { model: 'gemini-1.5-flash' }
+    { model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite' },
+    { model: 'gemini-3.7-flash' },
+    { model: 'gemini-3.6-flash' }
   ];
 
   let lastError = null;
   for (const attempt of attempts) {
     try {
-      const genConfig = { maxOutputTokens: 2048 };
+      // Modelos Gemini 3.x vêm com "thinking" ligado por padrão (nível HIGH),
+      // e os tokens de raciocínio são descontados do maxOutputTokens. Sem
+      // limitar isso aqui, o modelo pode gastar todo o budget "pensando" e
+      // devolver texto vazio com finishReason "MAX_TOKENS".
+      const genConfig = {
+        maxOutputTokens: 4096,
+        thinkingConfig: { thinkingLevel: 'LOW' }
+      };
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${attempt.model}:generateContent`;
       const resp = await fetch(url, {
         method: 'POST',
@@ -123,10 +130,16 @@ Responda sempre em português do Brasil.`;
 
       const candidate = data.candidates && data.candidates[0];
       const parts = candidate && candidate.content && candidate.content.parts;
-      const text = parts ? parts.map((p) => p.text || '').join('').trim() : '';
+      // Ignora partes de "thought" (raciocínio interno) ao montar o texto final.
+      const text = parts
+        ? parts.filter((p) => !p.thought).map((p) => p.text || '').join('').trim()
+        : '';
 
       if (!text) {
-        lastError = 'resposta vazia';
+        const finishReason = candidate && candidate.finishReason;
+        lastError = finishReason
+          ? `resposta vazia (finishReason: ${finishReason})`
+          : 'resposta vazia';
         continue;
       }
 
