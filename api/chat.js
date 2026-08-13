@@ -95,7 +95,7 @@ Responda sempre em português do Brasil.`;
 
   // Lista de modelos Gemini com fallback inteligente
   const attempts = [
-    { model: process.env.GEMINI_MODEL || 'gemini-3.6-flash' },
+    { model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite' },
     { model: 'gemini-3.7-flash' },
     { model: 'gemini-3.6-flash' }
   ];
