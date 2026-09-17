@@ -90,10 +90,10 @@ Responda sempre em português do Brasil
   const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
   const candidateModels = [
     preferredModel,
+    'gemini-3.8-flash',
     'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash'
   ];
   // Remove duplicatas mantendo a ordem
   const modelAttempts = [...new Set(candidateModels)];
